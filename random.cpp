@@ -1,0 +1,12 @@
+#include "random.h"
+
+namespace Random {
+    void seed_random(uint64_t seed) {
+        gen.seed(seed);
+    }
+
+    int get_random(int min, int max) {
+        std::uniform_int_distribution<int> dist(min, max);
+        return dist(gen);
+    }
+};
