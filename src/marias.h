@@ -32,6 +32,14 @@ enum class CHOOSE_MOVE : uint8_t {
 // bitfield of CHOOSE_MOVE
 #define Choose_Moves uint16_t
 
+enum class CARD_MOVE : uint8_t {
+    CHOOSE_TRUMP,
+};
+
+enum class CARDS_MOVE : uint8_t {
+    THROW_TWO,
+};
+
 enum class GAME_PHASE {
     CHOOSING,
     GAME,
@@ -50,11 +58,10 @@ enum class GAME_TYPE {
 // TODO(Sigull): Think about if a player should be outside of Game struct
 //               Maybe just move stuff like balance elsewhere
 typedef struct {
-    CHOOSE_MOVE (*play_choose);
-    Card (*play_card);
+    CHOOSE_MOVE (*play_choose)(Player*, Choose_Moves);
+    Card (*play_card)(Player*, CARD_MOVE, Deck hand);
+    Deck (*play_cards)(Player*, CARDS_MOVE, Deck hand);
     int balance;
-    Deck hand;
-    Deck won;
 } Player;
 
 uint8_t iter_player(uint8_t prev);
@@ -64,9 +71,14 @@ typedef struct {
     GAME_TYPE type;
 
     Player players[3];
+    Deck players_hand[3];
+    Deck attackers_5;
+    Deck players_won_cards[3];
     uint8_t starting_player_index; // Don't like this name
     uint8_t attacking_player_index;
     uint8_t current_player_index;
+
+    Card trump;
 
     Trick talon;
 } Game;

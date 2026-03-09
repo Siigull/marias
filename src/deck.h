@@ -3,13 +3,14 @@
 
 #include "common.h"
 
+#include <optional>
 #include <algorithm>
 
 typedef enum Suit : uint8_t {
     HEARTS = 0,
-    DIAMONDS = 8,
-    CLUBS = 16,
-    SPADES = 24,
+    DIAMONDS = 1,
+    CLUBS = 2,
+    SPADES = 3,
 } Suit;
 
 // Dont know how to handle ordering and different types of games.
@@ -43,10 +44,18 @@ typedef enum Value : uint8_t {
 
 // TODO(Sigull): When in single 5 bit value, it is basically 
 // index to the deck bitmap. Dont know If I want to use this.
-typedef struct Card {
-    Suit suit;
-    Value value;
-} Card; 
+typedef union {
+    struct {
+        uint8_t value : 3;
+        uint8_t suit  : 2;
+        uint8_t err   : 3;
+    };
+
+    uint8_t raw; 
+} Card;
+
+Card string_to_card(std::string str);
+std::string card_to_string(Card card);
 
 // Packed as 5 bits per card, padded to 8 bits
 // 000ssvvv

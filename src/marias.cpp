@@ -1,4 +1,6 @@
 #include "marias.h"
+#include "random.h"
+#include "player.h"
 
 #include <string>
 
@@ -29,27 +31,68 @@ Game game_init() {
     game.phase = GAME_PHASE::CHOOSING;
     game.type = GAME_TYPE::GAME;
     game.starting_player_index = 2;
-    game.attacking_player_index = 0;
-    game.current_player_index = 0;
     
     for (int i = 0; i < 3; i++) {
         game.players[i].balance     = 0;
-        game.players[i].hand        = 0;
-        game.players[i].won         = 0;
         game.players[i].play_choose = nullptr;
-        game.players[i].play_card   = nullptr;
+        game.players[i].play_cards   = nullptr;
     }
-    
-    game.talon = 0;
-    
+        
     return game;
 }
 
 void deal_cards(Game* game) {
-    uint8_t counts[4] = {12,10,,}; // Need to care about index
-    for (int i=0; i < 32; i++) {
-        game.players[i];
+    // Check it can be set with a single memset, that there is no padding in between.
+    assert(game->players_hand + sizeof(game->players_hand) == &game->attackers_5);
+    assert((&game->attackers_5) + sizeof(game->attackers_5) == game->players_won_cards);
+    memset(
+        game->players_hand,
+        0,
+        sizeof(game->players_hand) +
+          sizeof(game->attackers_5) +
+          sizeof(game->players_won_cards)
+    );
+
+    uint8_t ass[32] = {
+        0,0,0,0,0,0,0,
+        1,1,1,1,1,1,1,1,1,1,
+        2,2,2,2,2,2,2,2,2,2,
+        3,3,3,3,3
+    };
+    
+    for (int i=31; i>0; i--) {
+        int j = Random::get_random(0, i);
+        uint8_t tmp = ass[i];
+        ass[i] = ass[j];
+        ass[j] = tmp;
     }
+    
+    for (int i=0; i<32; i++) {
+        game->players_hand[ass[i]] |= (1u << i);
+    }
+}
+
+void attacker_choose_trump(Game* game) {
+    Player* attacker = &game->players[game->attacking_player_index];
+    Deck* att_hand = &(game->players_hand[game->attacking_player_index]);
+
+    Card card = attacker->play_card(attacker, CARD_MOVE::CHOOSE_TRUMP, *att_hand);
+
+    game->trump = card;
+
+    (*att_hand) |= game->attackers_5;
+    game->attackers_5 = 0;
+}
+
+// TODO(Sigull): For non ai implementation he should be able to take
+//               cards back. Maybe have one call for choosing game and throw away
+void attacker_throw_two(Game* game) {
+    Player* attacker = &game->players[game->attacking_player_index];
+    Deck* att_hand = &(game->players_hand[game->attacking_player_index]);
+
+    Deck cards = attacker->play_cards(attacker, CARDS_MOVE::THROW_TWO, *att_hand);
+
+    
 }
 
 void game_start(Game* game) {
@@ -58,5 +101,9 @@ void game_start(Game* game) {
 
     while (game->phase == GAME_PHASE::CHOOSING) {
         deal_cards(game);
+
+        attacker_choose_trump(game);
+
+        attacker_throw_two(game);
     }
 }
