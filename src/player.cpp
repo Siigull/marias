@@ -16,7 +16,9 @@ Card choose_any(Deck hand) {
     printf("Choose from:\n  ");
     for(int i=0; i<32; i++) {
         if (hand & (1 << i)) {
-            printf("%s, ", card_to_string({(Suit)((i&0b11000) >> 3), (Value)(i&0b111)}));
+            Card card;
+            card.raw = i;
+            printf("%s, ", card_to_string(card));
         }
     }
 

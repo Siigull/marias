@@ -3,6 +3,7 @@
 #include "player.h"
 
 #include <string>
+#include <cstring>
 
 uint8_t iter_player(uint8_t prev) {
     return ++prev % 3;
@@ -92,7 +93,25 @@ void attacker_throw_two(Game* game) {
 
     Deck cards = attacker->play_cards(attacker, CARDS_MOVE::THROW_TWO, *att_hand);
 
-    
+    assert(__builtin_popcount(cards) == 2);
+
+    game->throw_away |= ~cards;
+}
+
+bool attacker_choose_game(Game* game) {
+    Player* attacker = &game->players[game->attacking_player_index];
+
+    Choose_Moves moves = static_cast<Choose_Moves>(CHOOSE_MOVE::GAME) |
+                         static_cast<Choose_Moves>(CHOOSE_MOVE::HUNDRED) |
+                         static_cast<Choose_Moves>(CHOOSE_MOVE::BETL) |
+                         static_cast<Choose_Moves>(CHOOSE_MOVE::DURCH);
+
+    if (game->players_hand[game->attacking_player_index] & 
+        0x01 << (game->trump.suit * 8)) {
+        moves |= static_cast<Choose_Moves>(CHOOSE_MOVE::SEVEN);
+    }
+
+    attacker->play_choose(attacker, moves);
 }
 
 void game_start(Game* game) {
@@ -105,5 +124,7 @@ void game_start(Game* game) {
         attacker_choose_trump(game);
 
         attacker_throw_two(game);
+
+        attacker_choose_game(game);
     }
 }

@@ -29,18 +29,6 @@ typedef enum Value : uint8_t {
     ACE
 } Value;
 
-// Value for betl and durch
-// 'Normal' card values
-// typedef enum Special_Value {
-//     SPEC_SEVEN = 7,
-//     SPEC_EIGHT,
-//     SPEC_NINE,
-//     SPEC_TEN,
-//     SPEC_JACK,
-//     SPEC_QUEEN,
-//     SPEC_KING,
-//     SPEC_ACE,
-// } Special_Value;
 
 // TODO(Sigull): When in single 5 bit value, it is basically 
 // index to the deck bitmap. Dont know If I want to use this.
@@ -51,7 +39,7 @@ typedef union {
         uint8_t err   : 3;
     };
 
-    uint8_t raw; 
+    uint8_t raw;
 } Card;
 
 Card string_to_card(std::string str);
@@ -59,7 +47,17 @@ std::string card_to_string(Card card);
 
 // Packed as 5 bits per card, padded to 8 bits
 // 000ssvvv
-#define Trick uint32_t
+// #define Trick uint32_t
+
+typedef union {
+    struct {
+        uint8_t first : 8;
+        uint8_t second : 8;
+        uint8_t third : 8;
+    };
+
+    uint32_t raw;
+} Trick;
 
 Card get_card(Trick trick, uint8_t index);
 

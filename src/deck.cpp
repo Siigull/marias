@@ -5,8 +5,9 @@
 // Trick
 Card get_card(Trick trick, uint8_t index) {
     assert(index < 3);
-    uint8_t card = trick << (index * 8);
-    return {(Suit)((card & 0b11000) >> 3), (Value)(card & 0b111)};
+    Card card;
+    card.raw = trick << (index * 8);
+    return card;
 }
 
 Card string_to_card(std::string str) {

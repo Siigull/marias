@@ -3,7 +3,6 @@
 
 #include "deck.h"
 
-
 /**
  * TODO(Sigull): Need an interface between player and game.
  * In game it will be just cards (note: Queen being for hlaska is a little weird)
@@ -13,19 +12,22 @@
  * 
  */
 
-enum class CHOOSE_MOVE : uint8_t {
-    PASS, // Good/dobry
-    
-    GAME,
-    SEVEN,
-    HUNDRED,
+enum class CHOOSE_MOVE : uint32_t {
+    PASS = 0x01, // Good/dobry
 
-    FLEK_GAME,
-    FLEK_SEVEN,
-    FLEK_HUNDRED,
+    GAME = 0x02,
+    SEVEN = 0x04,
+    HUNDRED = 0x08,
 
-    BETL, 
-    DURCH,
+    FLEK_GAME = 0x10,
+    FLEK_SEVEN = 0x20,
+    FLEK_HUNDRED = 0x40,
+
+    HUNDRED_AGAINST = 0x80,
+    SEVEN_AGAINST = 0x100,
+
+    BETL = 0x200,
+    DURCH = 0x400,
 
     SENTINEL // Not actual. Keep this last or code will break
 };
@@ -58,7 +60,7 @@ enum class GAME_TYPE {
 // TODO(Sigull): Think about if a player should be outside of Game struct
 //               Maybe just move stuff like balance elsewhere
 typedef struct {
-    CHOOSE_MOVE (*play_choose)(Player*, Choose_Moves);
+    Choose_Moves (*play_choose)(Player*, Choose_Moves);
     Card (*play_card)(Player*, CARD_MOVE, Deck hand);
     Deck (*play_cards)(Player*, CARDS_MOVE, Deck hand);
     int balance;
@@ -79,6 +81,8 @@ typedef struct {
     uint8_t current_player_index;
 
     Card trump;
+
+    Deck throw_away; // Two cards which a person throws away
 
     Trick talon;
 } Game;
