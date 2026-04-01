@@ -98,7 +98,7 @@ void attacker_throw_two(Game* game) {
     game->throw_away |= ~cards;
 }
 
-bool attacker_choose_game(Game* game) {
+void attacker_choose_game(Game* game) {
     Player* attacker = &game->players[game->attacking_player_index];
 
     Choose_Moves moves = static_cast<Choose_Moves>(CHOOSE_MOVE::GAME) |
@@ -111,7 +111,76 @@ bool attacker_choose_game(Game* game) {
         moves |= static_cast<Choose_Moves>(CHOOSE_MOVE::SEVEN);
     }
 
-    attacker->play_choose(attacker, moves);
+    Choose_Moves chosen_moves = attacker->play_choose(attacker, moves);
+    
+    assert(chosen_moves);
+    
+    // Only picked from the ones which were passed to it.
+    assert(!((!moves) & chosen_moves));
+
+    // If betl or durch. It can be the only move chosen.
+    assert(!(chosen_moves & static_cast<uint16_t>(CHOOSE_MOVE::BETL)) || 
+             (chosen_moves & static_cast<uint16_t>(CHOOSE_MOVE::DURCH)
+            ) || 
+            __builtin_popcount(chosen_moves) != 1);
+
+    assert(!(chosen_moves & static_cast<uint16_t>(CHOOSE_MOVE::GAME)) || 
+           !(chosen_moves & static_cast<uint16_t>(CHOOSE_MOVE::HUNDRED)));
+
+    assert(!(chosen_moves & static_cast<uint16_t>(CHOOSE_MOVE::GAME)) || 
+           !(chosen_moves & static_cast<uint16_t>(CHOOSE_MOVE::SEVEN)));
+
+    if (chosen_moves & static_cast<uint16_t>(CHOOSE_MOVE::GAME)) {
+        game->type = GAME_TYPE::GAME;
+
+    } else if (chosen_moves & static_cast<uint16_t>(CHOOSE_MOVE::SEVEN)) {
+        if (chosen_moves & static_cast<uint16_t>(CHOOSE_MOVE::HUNDRED)) {
+            game->type = GAME_TYPE::HUNDRED_SEVEN;
+        } else {
+            game->type = GAME_TYPE::SEVEN;
+        }
+    } else if (chosen_moves & static_cast<uint16_t>(CHOOSE_MOVE::HUNDRED)) {
+        game->type = GAME_TYPE::HUNDRED;
+    }
+}
+
+void flek_choose(Game* game, uint8_t round) {
+    Player* p = &game->players[game->current_player_index];
+
+    Choose_Moves moves = 0;
+
+    if (game->type != GAME_TYPE::DURCH) {
+        moves |= static_cast<uint16_t>(CHOOSE_MOVE::DURCH);
+
+    } else if (game->type != GAME_TYPE::BETL) {
+        moves |= static_cast<uint16_t>(CHOOSE_MOVE::BETL);
+    }
+
+    switch(game->type) {
+        case GAME_TYPE::GAME:
+            moves |= static_cast<uint16_t>(CHOOSE_MOVE::FLEK_GAME);
+            break;
+
+        case GAME_TYPE::SEVEN:
+            moves |= static_cast<uint16_t>(CHOOSE_MOVE::FLEK_GAME);
+            moves |= static_cast<uint16_t>(CHOOSE_MOVE::FLEK_SEVEN);
+            break;
+
+        case GAME_TYPE::HUNDRED:
+            moves |= static_cast<uint16_t>(CHOOSE_MOVE::FLEK_HUNDRED);
+            break;
+
+        case GAME_TYPE::HUNDRED_SEVEN:
+            moves |= static_cast<uint16_t>(CHOOSE_MOVE::FLEK_HUNDRED);
+            moves |= static_cast<uint16_t>(CHOOSE_MOVE::FLEK_SEVEN);
+            break;
+    }
+
+    p->play_choose(p, moves);
+}
+
+void game_iter_player(Game* game) {
+    game->current_player_index = iter_player(game->current_player_index);
 }
 
 void game_start(Game* game) {
@@ -126,5 +195,17 @@ void game_start(Game* game) {
         attacker_throw_two(game);
 
         attacker_choose_game(game);
+        game_iter_player(game);
+        
+        uint8_t player_start = game->current_player_index;
+        uint8_t round = 0;
+        do {
+            flek_choose(game, round);
+            
+
+            // iteration to next round
+            round++;
+            game_iter_player(game);
+        } while(game->current_player_index != player_start);
     }
 }

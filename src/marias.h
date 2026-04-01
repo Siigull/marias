@@ -12,7 +12,7 @@
  * 
  */
 
-enum class CHOOSE_MOVE : uint32_t {
+enum class CHOOSE_MOVE : uint16_t {
     PASS = 0x01, // Good/dobry
 
     GAME = 0x02,
@@ -29,7 +29,10 @@ enum class CHOOSE_MOVE : uint32_t {
     BETL = 0x200,
     DURCH = 0x400,
 
-    SENTINEL // Not actual. Keep this last or code will break
+    FLEK_BETL = 0x800,
+    FLEK_DURCH = 0x1000,
+
+    SENTINEL // Keep this last
 };
 // bitfield of CHOOSE_MOVE
 #define Choose_Moves uint16_t
@@ -55,22 +58,30 @@ enum class GAME_TYPE {
 
     BETL,
     DURCH,
+
+    SENTINEL, // Keep this last
 };
 
 // TODO(Sigull): Think about if a player should be outside of Game struct
 //               Maybe just move stuff like balance elsewhere
 typedef struct {
     Choose_Moves (*play_choose)(Player*, Choose_Moves);
-    Card (*play_card)(Player*, CARD_MOVE, Deck hand);
-    Deck (*play_cards)(Player*, CARDS_MOVE, Deck hand);
+    Card         (*play_card)  (Player*, CARD_MOVE, Deck hand);
+    Deck         (*play_cards) (Player*, CARDS_MOVE, Deck hand);
     int balance;
 } Player;
 
 uint8_t iter_player(uint8_t prev);
 
 typedef struct {
+    uint16_t num;
+    uint8_t last_round;
+} Bet;
+
+typedef struct {
     GAME_PHASE phase;
     GAME_TYPE type;
+    Bet bets[static_cast<uint32_t>(GAME_TYPE::SENTINEL) - 1];
 
     Player players[3];
     Deck players_hand[3];
